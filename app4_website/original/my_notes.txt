@@ -1,0 +1,20 @@
+#create a python virtual environment
+1. in the same level of your python code, type: python -m venv virtual
+2. install flask in virtual folder: virtual/bin/pip install flask
+3. test run the application using virtual python virtual/bin/python my_website/my_website.py
+4. push the virtual python libraries into requirements.txt later
+
+#deploy the website to heroku server
+1. in virtual folder, install gunicorn: virtual/bin/pip install gunicorn
+2. need to cereate 3 folters (runtime.txt, requirements.txt, Procfile)
+3. declare the server type in Procfile: web: gunicorn script1:app
+4. declare python version in runtime.txt: python-3.6.6
+5. write all the requirements to requirements.txt: virtual/bin/python freeze > request.txt
+
+#how to make changes to file and push to production
+1. make changes to the code
+2. type: git add .
+3. type: git commit -m "descriptions"
+4. login to heroku : heroku login
+5. connect git to heroku: heroku git:remote --app shyang
+6. deploy: git push heroku master
