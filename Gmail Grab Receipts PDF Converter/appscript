@@ -1,0 +1,109 @@
+function mainFunction() {
+
+    var start_date = Browser.inputBox("Please select start date in YYYY/M/D format.");
+    var end_date = Browser.inputBox("Please select end date in YYYY/M/D format.");
+    var query = "from: no-reply@grab.com AND subject: Your Grab E-Receipt after:" + start_date + "before:" + end_date;
+    var driveFolder  = "My Grab Receipts";
+    var threads = GmailApp.search(query);
+    var sheet = SpreadsheetApp.getActiveSheet();
+    
+    /*Input receipts details on Gsheet*/
+    sheet.clearContents();
+  
+    for (var i = 0; i < threads.length; i++) {
+        
+       var messages = threads[i].getMessages();
+       
+       for (var message in messages){
+       
+         var content = messages[message].getPlainBody();
+         
+         if (content.match(/Booking code\n([A-Za-z0-9-]+)(\r?)/) !== null) {
+         
+         var tmp_bk;
+         var tmp_total;
+         var tmp_type;
+         
+         tmp_bk = content.match(/Booking code\n([A-Za-z0-9-]+)(\r?)/);
+         tmp_type = content.match(/Vehicle type:\n([A-Za-z0-9.]+)(\r?)/);
+         tmp_total = content.match(/TOTAL\n+RM\s+([A-Za-z0-9.]+)(\r?)/);
+         
+         var date = messages[message].getDate();
+         var type = (tmp_type && tmp_type[1]) ? tmp_type[1].trim() : "-";
+         var booking_code = (tmp_bk && tmp_bk[1]) ? tmp_bk[1].trim() : "-";
+         var total = (tmp_total && tmp_bk[1]) ? tmp_total[1].trim() : "-";
+         
+         Logger.log(date);
+         Logger.log(type);
+         Logger.log(booking_code);
+         Logger.log(total);
+         
+         sheet.appendRow([date, type, booking_code, total]);
+         
+         Utilities.sleep(200);
+         
+         }
+         
+       }
+  
+      }
+    
+    
+    /* save email to single pfd */
+   if (threads.length > 0) {
+  
+      /* Google Drive folder where the Files would be saved */
+      var folders = DriveApp.getFoldersByName(driveFolder);
+      var folder = folders.hasNext() ?
+          folders.next() : DriveApp.createFolder(driveFolder);
+      var html = "";
+      /* Gmail Label that contains the queue */
+      //var label = GmailApp.getUserLabelByName(query) ?
+        //  GmailApp.getUserLabelByName(query) : GmailApp.createLabel(driveFolder);
+  
+      for (var t=0; t<threads.length; t++) {
+  
+       // threads[t].removeLabel(label);
+        var msgs = threads[t].getMessages();
+  
+        
+        var attachments = [];
+  
+        var subject = threads[t].getFirstMessageSubject();
+  
+        /* Append all the threads in a message in an HTML document */
+        for (var m=0; m<msgs.length; m++) {
+  
+          var msg = msgs[m];
+  
+          html += "From: " + msg.getFrom() + "<br />";
+          html += "To: " + msg.getTo() + "<br />";
+          html += "Date: " + msg.getDate() + "<br />";
+          html += "Subject: " + msg.getSubject() + "<br />";
+          html += "<hr />";
+          html += msg.getBody().replace(/<img[^>]*>/g,"");
+          html += "<hr />";
+          
+          
+          var atts = msg.getAttachments();
+          for (var a=0; a<atts.length; a++) {
+            attachments.push(atts[a]);
+          }
+        }
+  
+        /* Save the attachment files and create links in the document's footer */
+        if (attachments.length > 0) {
+          var footer = "<strong>Attachments:</strong><ul>";
+          for (var z=0; z<attachments.length; z++) {
+            var file = folder.createFile(attachments[z]);
+            footer += "<li><a href='" + file.getUrl() + "'>" + file.getName() + "</a></li>";
+          }
+          html += footer + "</ul>";
+        }
+  
+        
+  
+      }
+          /* Conver the Email Thread into a PDF File */
+        var tempFile = DriveApp.createFile("temp.html", html, "text/html");
+        folder.createFile(tempFile.getAs("application/pdf")).setName(subject /*+ msg.getDate()*/ + ".pdf");
