@@ -44,6 +44,7 @@ while True:
     cv2.imshow('Delta Frame', delta_frame)
     cv2.imshow('Threshold Frame', thresh_frame)
     cv2.imshow('Color Frame', frame)
+    status_list = status_list[-2]
 
     #check the item in the list, capture when 0 to 1 as start_time and and 1 to 0 as end_time
     if status_list[-1] == 1 and status_list[-2] == 0:

@@ -1,3 +1,0 @@
-([('frontend',
-   '/Users/admin/Desktop/Coding/coding-tutorial/app5_database_app/dist/frontend',
-   'EXECUTABLE')],)
